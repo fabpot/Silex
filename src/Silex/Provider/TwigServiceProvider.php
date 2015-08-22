@@ -21,6 +21,7 @@ use Symfony\Bridge\Twig\Extension\FormExtension;
 use Symfony\Bridge\Twig\Extension\SecurityExtension;
 use Symfony\Bridge\Twig\Extension\HttpFoundationExtension;
 use Symfony\Bridge\Twig\Extension\HttpKernelExtension;
+use Symfony\Bridge\Twig\Extension\LogoutUrlExtension;
 use Symfony\Bridge\Twig\Form\TwigRendererEngine;
 use Symfony\Bridge\Twig\Form\TwigRenderer;
 
@@ -75,6 +76,7 @@ class TwigServiceProvider implements ServiceProviderInterface
 
                 if (isset($app['security.authorization_checker'])) {
                     $twig->addExtension(new SecurityExtension($app['security.authorization_checker']));
+                    $twig->addExtension(new LogoutUrlExtension($app['security.logout_url_generator']));
                 }
 
                 if (isset($app['fragment.handler'])) {

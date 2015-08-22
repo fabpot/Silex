@@ -14,6 +14,7 @@ namespace Silex\Tests\Provider;
 use Silex\Application;
 use Silex\Provider\TwigServiceProvider;
 use Silex\Provider\AssetServiceProvider;
+use Silex\Provider\SecurityServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -92,5 +93,30 @@ class TwigServiceProviderTest extends \PHPUnit_Framework_TestCase
         ));
 
         $this->assertEquals('Fabien', $app['twig']->render('hello'));
+    }
+
+    public function testLogoutUrlIntegration()
+    {
+        $app = new Application();
+        $app['request_stack']->push(Request::create('/dir1/dir2/file'));
+
+        $app->register(new SecurityServiceProvider(), array(
+            'security.firewalls' => array(
+                'admin' => array(
+                    'logout' => true,
+                ),
+            ),
+        ));
+
+        $app->boot();
+        $app->flush();
+
+        $app->register(new TwigServiceProvider(), array(
+            'twig.templates' => array(
+                'logout' => '{{ logout_url() }}',
+            ),
+        ));
+
+        $this->assertEquals('xxxs', $app['twig']->render('logout'));
     }
 }

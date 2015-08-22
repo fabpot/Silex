@@ -54,6 +54,7 @@ use Symfony\Component\Security\Http\EntryPoint\FormAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\BasicAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\RetryAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategy;
+use Symfony\Component\Security\Http\Logout\LogoutUrlGenerator;
 use Symfony\Component\Security\Http\Logout\SessionLogoutHandler;
 use Symfony\Component\Security\Http\Logout\DefaultLogoutSuccessHandler;
 use Symfony\Component\Security\Http\AccessMap;
@@ -357,6 +358,10 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             }
         });
 
+        $app['security.logout_url_generator'] = function ($app) {
+            return new LogoutUrlGenerator($app['request_stack'], $app['url_generator'], $app['security.token_storage']);
+        };
+
         // prototypes (used by the Firewall Map)
 
         $app['security.context_listener._proto'] = $app->protect(function ($providerKey, $userProviders) use ($app) {
@@ -489,8 +494,8 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             return function () use ($app, $name, $options, $that) {
                 $that->addFakeRoute(
                     'get',
-                    $tmp = isset($options['logout_path']) ? $options['logout_path'] : '/logout',
-                    str_replace('/', '_', ltrim($tmp, '/'))
+                    $logoutPath = isset($options['logout_path']) ? $options['logout_path'] : '/logout',
+                    str_replace('/', '_', ltrim($logoutPath, '/'))
                 );
 
                 if (!isset($app['security.authentication.logout_handler.'.$name])) {
@@ -505,6 +510,14 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     isset($options['with_csrf']) && $options['with_csrf'] && isset($app['form.csrf_provider']) ? $app['form.csrf_provider'] : null
                 );
 
+                $app['security.logout_url_generator']->registerListener($name, $logoutPath);
+                /*
+                ->addMethodCall('registerListener', array(
+                    $firewall['logout']['csrf_token_id'],
+                    $firewall['logout']['csrf_parameter'],
+                    isset($firewall['logout']['csrf_token_generator']) ? new Reference($firewall['logout']['csrf_token_generator']) : null,
+                ))
+                    */
                 $invalidateSession = isset($options['invalidate_session']) ? $options['invalidate_session'] : true;
                 if (true === $invalidateSession && false === $options['stateless']) {
                     $listener->addHandler(new SessionLogoutHandler());
