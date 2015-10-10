@@ -83,7 +83,9 @@ class ValidatorServiceProviderTest extends \PHPUnit_Framework_TestCase
      */
     public function testValidatorServiceIsAValidator($app)
     {
-        $this->assertInstanceOf('Symfony\Component\Validator\ValidatorInterface', $app['validator']);
+        if (class_exists('Symfony\Component\Validator\ValidatorInterface')) {
+            $this->assertInstanceOf('Symfony\Component\Validator\ValidatorInterface', $app['validator']);
+        }
     }
 
     /**
